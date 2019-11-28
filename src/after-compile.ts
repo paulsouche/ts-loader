@@ -339,7 +339,7 @@ function provideDeclarationFilesToWebpack(
   compilation: webpack.compilation.Compilation
 ) {
   for (const filePath of filesToCheckForErrors.keys()) {
-    if (filePath.match(constants.tsTsxRegex) === null) {
+    if (fileDoesNotEmitDeclaration(filePath, instance)) {
       continue;
     }
 
@@ -349,9 +349,11 @@ function provideDeclarationFilesToWebpack(
     );
 
     declarationFiles.forEach(declarationFile => {
-      const assetPath = path.relative(
-        compilation.compiler.outputPath,
-        declarationFile.name
+      const assetPath = getDeclarationAssetPath(
+        declarationFile,
+        filePath,
+        instance,
+        compilation
       );
       compilation.assets[assetPath] = {
         source: () => declarationFile.text,
@@ -359,6 +361,34 @@ function provideDeclarationFilesToWebpack(
       };
     });
   }
+}
+
+function fileDoesNotEmitDeclaration(filePath: string, instance: TSInstance) {
+  if (filePath.match(constants.tsTsxRegex) === null) {
+    return true;
+  }
+
+  if (!!filePath.match(constants.dtsDtsxOrDtsDtsxMapRegex)) {
+    return true;
+  }
+
+  return (
+    instance.loaderOptions.onlyCompileBundledFiles &&
+    !instance.rootFileNames.has(filePath)
+  );
+}
+
+function getDeclarationAssetPath(
+  declarationFile: ts.OutputFile,
+  filePath: string,
+  instance: TSInstance,
+  compilation: webpack.compilation.Compilation
+) {
+  if (instance.loaderOptions.onlyCompileBundledFiles) {
+    return filePath;
+  }
+
+  return path.relative(compilation.compiler.outputPath, declarationFile.name);
 }
 
 function getOutputPathForBuildInfo(

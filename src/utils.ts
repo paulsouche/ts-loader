@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as typescript from 'typescript';
 import * as webpack from 'webpack';
 
+import ts = require('typescript');
 import constants = require('./constants');
 import {
   DependencyGraph,
@@ -414,4 +415,15 @@ function getOutputJavaScriptFileName(
     ? '.jsx'
     : '.js';
   return outputPath.replace(constants.extensionRegex, newExtension);
+}
+
+export function getBaseUrl(
+  compilerOptions: ts.CompilerOptions
+): string | undefined {
+  const compilerBaseUrl = compilerOptions.baseUrl;
+  if (!compilerBaseUrl) {
+    return;
+  }
+  const paths = compilerOptions.paths || {};
+  Object.values(paths).forEach(relativePaths => {});
 }
